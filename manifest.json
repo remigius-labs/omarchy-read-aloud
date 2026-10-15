@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "remi.say",
+  "name": "Read Aloud",
+  "version": "0.1.0",
+  "author": "remigius-labs",
+  "description": "Text to speech for the Omarchy bar: copy text, press a key, and a local Kokoro voice reads it aloud. Click again to stop.",
+  "kinds": [
+    "bar-widget"
+  ],
+  "entryPoints": {
+    "barWidget": "Panel.qml"
+  },
+  "barWidget": {
+    "displayName": "Read Aloud",
+    "description": "Read the clipboard aloud",
+    "category": "Utilities",
+    "defaultSection": "right",
+    "allowMultiple": false
+  }
+}

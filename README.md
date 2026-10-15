@@ -61,6 +61,12 @@ The second line deletes the voice engine and model (about 350 MB).
 
 ![Read Aloud in action](preview.gif)
 
+### How it works
+
+Copy text, tap the key, and it reads it out.
+
+![Copy text, tap the key, it reads aloud](demo.gif)
+
 ## License
 
 MIT. Kokoro model weights are Apache 2.0. Packages the setup installs keep their own licenses: kokoro-onnx and onnxruntime (MIT), phonemizer and espeak-ng (GPL-3).

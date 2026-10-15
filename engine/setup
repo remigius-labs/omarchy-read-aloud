@@ -1,0 +1,101 @@
+#!/bin/bash
+# Installs the Read Aloud speech engine into ~/.local/share/omarchy-say:
+# Python 3.12 and pinned packages through uv, then the Kokoro model files,
+# checked against fixed SHA-256 hashes. Progress goes to a JSON state file
+# the bar widget watches. `setup --cancel` stops a running setup.
+
+SRC=$(dirname "$(readlink -f "$0")")
+ENGINE=${OMARCHY_SAY_HOME:-$HOME/.local/share/omarchy-say}
+RUN=${XDG_RUNTIME_DIR:-/tmp}
+STATE=$RUN/omarchy-say.setup
+PIDFILE=$RUN/omarchy-say.setup.pid
+
+MODEL_URL=https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0
+MODELS=(
+  "kokoro-v1.0.onnx 325532387 7d5df8ecf7d4b1878015a32686053fd0eebe2bc377234608764cc0ef3636a6c5"
+  "voices-v1.0.bin 28214398 bca610b8308e8d99f32e6fe4197e7ec01679264efed0cac9140fe9c29f1fbf7d"
+)
+
+STEP=1
+
+state() {
+  printf '%s' "$1" > "$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+}
+
+fail() {
+  state "{\"step\": $STEP, \"phase\": \"error\", \"error\": \"$1\"}"
+  rm -f "$PIDFILE"
+  exit 1
+}
+
+if [[ $1 == --cancel ]]; then
+  pid=$(cat "$PIDFILE" 2>/dev/null)
+  if [[ -n $pid ]] && grep -q setup "/proc/$pid/cmdline" 2>/dev/null; then
+    kill -TERM -- "-$pid" 2>/dev/null
+    step=$(grep -o '"step": [0-9]' "$STATE" 2>/dev/null | grep -o '[0-9]')
+    state "{\"step\": ${step:-1}, \"phase\": \"error\", \"error\": \"Setup cancelled. Retry whenever you like.\"}"
+  fi
+  rm -f "$PIDFILE"
+  exit 0
+fi
+
+# Run in its own process group so cancel can stop curl and uv with it.
+if [[ -z $OMARCHY_SAY_GROUP ]]; then
+  OMARCHY_SAY_GROUP=1 exec setsid "$0" "$@"
+fi
+echo $$ > "$PIDFILE"
+
+# 1. Tools and Python 3.12
+state '{"step": 1, "phase": "running"}'
+command -v uv >/dev/null || fail "Read Aloud needs uv. Install it with: omarchy pkg add uv"
+command -v pw-play >/dev/null || fail "Read Aloud needs PipeWire (pw-play)."
+command -v wl-paste >/dev/null || fail "Read Aloud needs wl-clipboard (wl-paste)."
+uv python install 3.12 -q >/dev/null 2>&1 || fail "Could not download Python 3.12. Check your internet connection and retry."
+
+# 2. Kokoro engine, exact versions from uv.lock
+STEP=2
+state '{"step": 2, "phase": "running"}'
+mkdir -p "$ENGINE/models" || fail "Could not create $ENGINE."
+cp "$SRC/speak.py" "$SRC/say" "$SRC/pyproject.toml" "$SRC/uv.lock" "$ENGINE/" || fail "Could not copy the engine files."
+(cd "$ENGINE" && uv sync --frozen --python 3.12 -q >/dev/null 2>&1) \
+  || fail "Could not install the Kokoro engine from pypi.org. Check your internet connection and retry."
+
+# 3. Voice model, with a live byte count for the progress bar
+STEP=3
+total=0
+for m in "${MODELS[@]}"; do set -- $m; total=$((total + $2)); done
+done_before=0
+start=$(date +%s)
+for m in "${MODELS[@]}"; do
+  set -- $m
+  name=$1 size=$2 sum=$3 file=$ENGINE/models/$1
+  if [[ -f $file ]] && echo "$sum  $file" | sha256sum -c --status; then
+    done_before=$((done_before + size))
+    continue
+  fi
+  curl -fsSL --retry 3 -o "$file.part" "$MODEL_URL/$name" &
+  curl_pid=$!
+  while kill -0 $curl_pid 2>/dev/null; do
+    got=$(( done_before + $(stat -c %s "$file.part" 2>/dev/null || echo 0) ))
+    elapsed=$(( $(date +%s) - start ))
+    eta=""
+    if (( got > 0 && elapsed > 1 )); then
+      left=$(( (total - got) * elapsed / got ))
+      eta=$(printf '%d:%02d' $((left / 60)) $((left % 60)))
+    fi
+    state "{\"step\": 3, \"phase\": \"running\", \"done\": $got, \"total\": $total, \"eta\": \"$eta\"}"
+    sleep 0.5
+  done
+  wait $curl_pid || fail "Could not download the voice model. Check your internet connection and retry."
+  echo "$sum  $file.part" | sha256sum -c --status \
+    || { rm -f "$file.part"; fail "The voice model download was damaged. Retry to download it again."; }
+  mv "$file.part" "$file"
+  done_before=$((done_before + size))
+done
+
+# 4. Done
+[[ -f $ENGINE/settings.json ]] || printf '{\n  "voice": "af_heart",\n  "speed": 1.1\n}\n' > "$ENGINE/settings.json"
+touch "$ENGINE/.ready"
+state '{"step": 3, "phase": "done"}'
+rm -f "$PIDFILE"
+"$ENGINE/say" "Voice ready." >/dev/null 2>&1 &

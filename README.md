@@ -6,10 +6,6 @@ Powered by Kokoro: [GitHub](https://github.com/hexgrad/kokoro) · [🤗 Hugging 
 
 ![Read Aloud](preview.png)
 
-## Preview
-
-![Read Aloud in action](preview.gif)
-
 ## Controls
 
 - **Left-click** the speech bubble: read the clipboard. Click again to stop.
@@ -27,15 +23,11 @@ o.bind("CTRL + ALT + Control_R", "Read clipboard aloud / stop", '$HOME/.local/sh
 o.bind("CTRL + ALT + Alt_R", "Read clipboard aloud / stop", '$HOME/.local/share/omarchy-say/say --clip', { release = true })
 ```
 
-## Requirements
+## First run
 
-The widget drives a small speech engine (Python, `kokoro-onnx`, about 350 MB of model files). It looks for it in `~/.local/share/omarchy-say/`; point it elsewhere with:
+The first click sets up the voice by itself: Python 3.12 and the Kokoro engine through `uv`, then the 350 MB voice model, checked against fixed SHA-256 hashes. A progress bar shows in the panel, and it says "Voice ready" when done. Everything lands in `~/.local/share/omarchy-say/`.
 
-```bash
-omarchy bar set remi.say engineDir /path/to/engine
-```
-
-The engine needs `pw-play` (PipeWire) and `wl-paste` (wl-clipboard).
+Needs `uv`, PipeWire (`pw-play`) and wl-clipboard (`wl-paste`). Omarchy ships all three.
 
 ## Install
 
@@ -51,9 +43,12 @@ omarchy plugin remove remi.say
 
 ## Limits
 
-- This repo holds the bar widget; the speech engine installs separately.
 - Kokoro has English (US, UK), Portuguese, Spanish, French, Japanese, Italian, Mandarin and Hindi.
 - First sound takes about a second on a laptop CPU.
+
+## Preview
+
+![Read Aloud in action](preview.gif)
 
 ## License
 

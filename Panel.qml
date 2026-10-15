@@ -12,8 +12,13 @@ Panel {
 
   readonly property string engineDir: setting("engineDir", Quickshell.env("HOME") + "/.local/share/omarchy-say")
   readonly property string sayBin: engineDir + "/say"
+  readonly property string setupBin: Qt.resolvedUrl("engine/setup").toString().replace("file://", "")
   readonly property string settingsPath: engineDir + "/settings.json"
   property string sayState: "idle"
+  property bool engineReady: true
+  property var setup: ({ step: 0, phase: "idle" })
+  property bool previewSetup: false
+  readonly property bool showSetup: previewSetup || !engineReady
   property string voice: "af_heart"
   property string speed: "1.1"
   property bool showAllVoices: false
@@ -37,7 +42,7 @@ Panel {
   // shows the spinner no matter where reading was started.
   FileView {
     id: stateFile
-    path: Quickshell.env("XDG_RUNTIME_DIR") + "/claude-say.state"
+    path: Quickshell.env("XDG_RUNTIME_DIR") + "/omarchy-say.state"
     watchChanges: true
     printErrors: false
     onFileChanged: this.reload()
@@ -73,8 +78,37 @@ Panel {
   }
 
   // Scriptable view state: omarchy-shell remi.say-view <function> <arg>
+  // The engine drops a .ready marker once installed; the installer reports
+  // progress in the runtime dir.
+  FileView {
+    id: readyFile
+    path: root.engineDir + "/.ready"
+    watchChanges: true
+    printErrors: false
+    onFileChanged: this.reload()
+    onLoaded: root.engineReady = true
+    onLoadFailed: root.engineReady = false
+  }
+  FileView {
+    id: setupFile
+    path: Quickshell.env("XDG_RUNTIME_DIR") + "/omarchy-say.setup"
+    watchChanges: true
+    printErrors: false
+    onFileChanged: this.reload()
+    onLoaded: { if (!root.previewSetup) { try { root.setup = JSON.parse(setupFile.text()) } catch (e) {} } }
+  }
+
+  function startSetup() {
+    root.setup = { step: 1, phase: "running" }
+    Quickshell.execDetached([root.setupBin])
+  }
+
   IpcHandler {
     target: "remi.say-view"
+    function preview(json: string): void {
+      root.previewSetup = json !== "off"
+      if (root.previewSetup) root.setup = JSON.parse(json)
+    }
     function voices(show: bool): void { root.showAllVoices = show }
     function gender(g: string): void { root.genderFilter = g === "m" ? "m" : "f" }
     function settings(show: bool): void { root.showKeys = show; if (show) root.showAllVoices = false }
@@ -92,7 +126,10 @@ Panel {
         : root.sayState === "loading" ? "Getting ready · click to cancel"
         : root.sayState === "playing" ? "Stop reading" : "Read the clipboard aloud · right-click for voice"
     onPressed: function(b) {
-      if (b === Qt.RightButton) root.toggle()
+      if (!root.engineReady) {
+        root.open()
+        if (root.setup.phase !== "running") root.startSetup()
+      } else if (b === Qt.RightButton) root.toggle()
       else Quickshell.execDetached([root.sayBin, "--clip"])
     }
   }
@@ -105,7 +142,7 @@ Panel {
     open: root.opened
     focusTarget: keyCatcher
     contentWidth: panel.fittedContentWidth(Style.space(300))
-    contentHeight: panel.fittedContentHeight(column.implicitHeight)
+    contentHeight: panel.fittedContentHeight(root.showSetup ? setupColumn.implicitHeight : column.implicitHeight)
 
     PanelKeyCatcher {
       id: keyCatcher
@@ -114,7 +151,162 @@ Panel {
       onTabRequested: function(direction) { root.switchPanel(direction) }
 
       Column {
+        id: setupColumn
+        visible: root.showSetup
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        spacing: Style.space(14)
+
+        Item {
+          width: parent.width
+          implicitHeight: setupHead.implicitHeight
+          Column {
+            id: setupHead
+            anchors.left: parent.left
+            spacing: Style.space(2)
+            Text {
+              text: root.setup.phase === "done" ? "Voice ready" : "Setting up voice"
+              color: root.bar.foreground
+              font.family: root.bar.fontFamily
+              font.pixelSize: Style.font.title
+              font.bold: true
+            }
+            Text {
+              text: "Kokoro 82M · runs on this machine · 350 MB"
+              color: Qt.darker(root.bar.foreground, 1.4)
+              font.family: root.bar.fontFamily
+              font.pixelSize: Style.font.caption
+            }
+          }
+          Button {
+            visible: root.setup.phase === "running"
+            anchors.right: parent.right
+            anchors.top: parent.top
+            iconText: "󰅖"
+            iconSize: Style.font.title
+            tooltipText: "Cancel setup"
+            foreground: root.bar.foreground
+            fontFamily: root.bar.fontFamily
+            horizontalPadding: Style.space(4)
+            verticalPadding: Style.space(2)
+            bordered: false
+            opacity: 0.6
+            onClicked: Quickshell.execDetached([root.setupBin, "--cancel"])
+          }
+        }
+
+        PanelSeparator { foreground: root.bar.foreground }
+
+        Repeater {
+          model: [
+            { n: 1, label: "Python 3.12" },
+            { n: 2, label: "Kokoro engine" },
+            { n: 3, label: "Voice model" }
+          ]
+          Column {
+            id: stepRow
+            required property var modelData
+            readonly property string stepState: root.setup.phase === "done" || root.setup.step > modelData.n ? "done"
+                : root.setup.step === modelData.n ? (root.setup.phase === "error" ? "error" : "active") : "todo"
+            width: parent.width
+            spacing: Style.space(8)
+            Item {
+              width: parent.width
+              implicitHeight: stepLabel.implicitHeight
+              Item {
+                id: stepIcon
+                width: Style.font.title
+                height: width
+                anchors.verticalCenter: parent.verticalCenter
+                Loader {
+                  anchors.fill: parent
+                  active: stepRow.stepState === "active"
+                  sourceComponent: ring
+                }
+                Text {
+                  anchors.centerIn: parent
+                  visible: stepRow.stepState !== "active"
+                  text: stepRow.stepState === "done" ? "󰄬" : stepRow.stepState === "error" ? "󰀦" : "󰝦"
+                  color: stepRow.stepState === "error" ? "#ef5350" : root.bar.foreground
+                  opacity: stepRow.stepState === "todo" ? 0.35 : 1.0
+                  font.family: root.bar.fontFamily
+                  font.pixelSize: Style.font.title
+                }
+              }
+              Text {
+                id: stepLabel
+                anchors.left: stepIcon.right
+                anchors.leftMargin: Style.space(10)
+                anchors.verticalCenter: parent.verticalCenter
+                text: modelData.label
+                color: root.bar.foreground
+                opacity: stepRow.stepState === "todo" ? 0.45 : 1.0
+                font.family: root.bar.fontFamily
+                font.pixelSize: Style.font.bodySmall
+              }
+            }
+            Column {
+              visible: modelData.n === 3 && stepRow.stepState === "active" && (root.setup.total || 0) > 0
+              width: parent.width
+              spacing: Style.space(6)
+              Rectangle {
+                width: parent.width
+                height: Style.space(6)
+                radius: height / 2
+                color: Qt.darker(root.bar.foreground, 3.5)
+                Rectangle {
+                  width: parent.width * Math.min(1, (root.setup.done || 0) / Math.max(1, root.setup.total || 1))
+                  height: parent.height
+                  radius: parent.radius
+                  color: root.bar.foreground
+                  Behavior on width { NumberAnimation { duration: 300 } }
+                }
+              }
+              Text {
+                readonly property int pct: Math.round(100 * (root.setup.done || 0) / Math.max(1, root.setup.total || 1))
+                text: Math.round((root.setup.done || 0) / 1e6) + " / " + Math.round((root.setup.total || 0) / 1e6) + " MB · " + pct + "%" + (root.setup.eta ? " · " + root.setup.eta + " left" : "")
+                color: Qt.darker(root.bar.foreground, 1.4)
+                font.family: root.bar.fontFamily
+                font.pixelSize: Style.font.caption
+              }
+            }
+          }
+        }
+
+        Text {
+          visible: root.setup.phase === "error"
+          width: parent.width
+          wrapMode: Text.WordWrap
+          text: root.setup.error || "Setup stopped."
+          color: "#ef5350"
+          font.family: root.bar.fontFamily
+          font.pixelSize: Style.font.bodySmall
+        }
+        Button {
+          visible: root.setup.phase === "error"
+          width: parent.width
+          text: "Retry"
+          fontSize: Style.font.bodySmall
+          foreground: root.bar.foreground
+          fontFamily: root.bar.fontFamily
+          bordered: true
+          onClicked: root.startSetup()
+        }
+        Text {
+          visible: root.setup.phase === "done"
+          width: parent.width
+          wrapMode: Text.WordWrap
+          text: "Copy any text and click the bubble, or tap AltGr + Ctrl."
+          color: root.bar.foreground
+          font.family: root.bar.fontFamily
+          font.pixelSize: Style.font.bodySmall
+        }
+      }
+
+      Column {
         id: column
+        visible: !root.showSetup
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top

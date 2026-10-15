@@ -1,0 +1,4 @@
+#!/bin/sh
+# Read the clipboard aloud (or the given text); run again while it reads to stop.
+HERE=$(dirname "$(readlink -f "$0")")
+exec setsid -w "$HERE/.venv/bin/python" "$HERE/speak.py" "$@"

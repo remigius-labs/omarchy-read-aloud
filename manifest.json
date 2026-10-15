@@ -4,7 +4,7 @@
   "name": "Read Aloud",
   "version": "0.1.0",
   "author": "remigius-labs",
-  "description": "Text to speech for the Omarchy bar: copy text, press a key, and a local Kokoro voice reads it aloud. Click again to stop.",
+  "description": "Local AI text to speech for the Omarchy bar: copy text, press a key, and a Kokoro voice reads it aloud. Click again to stop.",
   "kinds": [
     "bar-widget"
   ],

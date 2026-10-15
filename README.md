@@ -2,6 +2,8 @@
 
 Local AI text to speech for the [Omarchy](https://omarchy.org) bar. Copy text, press a key, and a local [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) voice reads it aloud. Everything runs on your machine.
 
+Powered by Kokoro: [GitHub](https://github.com/hexgrad/kokoro) · [🤗 Hugging Face](https://huggingface.co/hexgrad/Kokoro-82M)
+
 ![Read Aloud](preview.png)
 
 ## Preview

@@ -381,6 +381,25 @@ Panel {
             }
           }
         }
+
+        PanelSectionHeader {
+          visible: root.showKeys
+          text: "MODEL"
+          foreground: root.bar.foreground
+          fontFamily: root.bar.fontFamily
+        }
+        Chips {
+          visible: root.showKeys
+          width: parent.width
+          perRow: 2
+          options: [
+            { value: "https://github.com/hexgrad/kokoro", label: "󰊤 GitHub", tooltip: "Kokoro on GitHub" },
+            { value: "https://huggingface.co/hexgrad/Kokoro-82M", label: "🤗 Hugging Face", tooltip: "Kokoro-82M on Hugging Face" }
+          ]
+          foreground: root.bar.foreground
+          fontFamily: root.bar.fontFamily
+          onPicked: function(url) { Qt.openUrlExternally(url); root.close() }
+        }
       }
     }
   }

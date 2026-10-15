@@ -39,7 +39,10 @@ omarchy plugin add https://github.com/remigius-labs/omarchy-read-aloud --enable
 
 ```bash
 omarchy plugin remove remi.say
+rm -rf ~/.local/share/omarchy-say
 ```
+
+The second line deletes the voice engine and model (about 350 MB).
 
 ## Limits
 

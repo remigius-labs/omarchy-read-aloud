@@ -57,11 +57,7 @@ The second line deletes the voice engine and model (about 350 MB).
 - Kokoro has English (US, UK), Portuguese, Spanish, French, Japanese, Italian, Mandarin and Hindi.
 - First sound takes about a second on a laptop CPU.
 
-## Preview
-
-![Read Aloud in action](preview.gif)
-
-### How it works
+## How it works
 
 Copy text, tap the key, and it reads it out.
 

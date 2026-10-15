@@ -55,4 +55,4 @@ The second line deletes the voice engine and model (about 350 MB).
 
 ## License
 
-MIT. Kokoro model weights are Apache 2.0.
+MIT. Kokoro model weights are Apache 2.0. Packages the setup installs keep their own licenses: kokoro-onnx and onnxruntime (MIT), phonemizer and espeak-ng (GPL-3).

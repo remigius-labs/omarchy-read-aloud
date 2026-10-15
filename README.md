@@ -49,8 +49,8 @@ omarchy plugin remove remi.say
 
 ## Limits
 
-- The speech engine is not bundled yet; this repo holds the bar widget.
-- Kokoro has English (US, UK), Portuguese, Spanish, French, Japanese, Italian, Mandarin and Hindi. No Dutch or German.
+- This repo holds the bar widget; the speech engine installs separately.
+- Kokoro has English (US, UK), Portuguese, Spanish, French, Japanese, Italian, Mandarin and Hindi.
 - First sound takes about a second on a laptop CPU.
 
 ## License

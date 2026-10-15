@@ -21,7 +21,7 @@ Panel {
   property bool showKeys: false
   readonly property var langVoices: Model.allVoices.filter(function(v) { return v.charAt(0) === root.lang })
   readonly property var genderVoices: langVoices.filter(function(v) { return v.charAt(1) === root.genderFilter })
-  // Collapsed: one voice. Yours if it matches the toggle, else that gender's best.
+  // Collapsed: one voice. The current voice if it matches the toggle, else the best of that gender.
   readonly property string topVoice: {
     if (voice.charAt(1) === genderFilter && voice.charAt(0) === lang) return voice
     var best = Model.shortVoices[lang].filter(function(v) { return v.charAt(1) === root.genderFilter })

@@ -1,7 +1,7 @@
 .pragma library
 
 // Kokoro voice ids: first letter is the language, second the gender.
-// Ordered by how many Omarchy users likely speak each.
+// Display order of the language chips.
 var languages = [
   { value: "a", label: "US", name: "English (US)", sample: "Hi, this is {name}." },
   { value: "b", label: "UK", name: "English (UK)", sample: "Hello, this is {name}." },

@@ -1,10 +1,10 @@
 {
   "schemaVersion": 1,
   "id": "remi.say",
-  "name": "Read Aloud",
+  "name": "Read Aloud: Text to Speech",
   "version": "0.1.0",
   "author": "remigius-labs",
-  "description": "Local AI text to speech for the Omarchy bar: copy text, press a key, and a Kokoro voice reads it aloud. Click again to stop.",
+  "description": "Text to speech (TTS) for Omarchy. Read aloud any text you copy with a local AI voice (Kokoro). 54 voices, 9 languages, works offline after setup. Helps with dyslexia and long reads.",
   "kinds": [
     "bar-widget"
   ],

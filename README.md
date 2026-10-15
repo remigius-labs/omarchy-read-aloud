@@ -1,6 +1,6 @@
-# Read Aloud
+# Read Aloud: Text to Speech
 
-Local AI text to speech for the [Omarchy](https://omarchy.org) bar. Copy text, press a key, and a local [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) voice reads it aloud. Everything runs on your machine.
+Text to speech (TTS) for the [Omarchy](https://omarchy.org) bar. Read aloud any text you copy with a local AI voice ([Kokoro](https://huggingface.co/hexgrad/Kokoro-82M)). 54 voices, 9 languages, works offline after setup. Helps with dyslexia and long reads.
 
 Powered by Kokoro: [GitHub](https://github.com/hexgrad/kokoro) · [🤗 Hugging Face](https://huggingface.co/hexgrad/Kokoro-82M)
 

@@ -138,7 +138,7 @@ def main():
     if stop_running() and not restart:
         return
     if args == ["-"]:
-        text = clean(sys.stdin.read())
+        text = clean(sys.stdin.read(CLIP_MAX))
     else:
         text = clean(" ".join(a for a in args if a != "--clip") or clipboard())
     if not text:

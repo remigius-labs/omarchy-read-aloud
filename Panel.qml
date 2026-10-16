@@ -141,7 +141,7 @@ Panel {
     iconComponent: root.sayState === "loading" ? ring : null
     tooltipText: root.opened ? ""
         : root.sayState === "loading" ? "Getting ready · click to cancel"
-        : root.sayState === "playing" ? "Stop reading" : "Read the clipboard aloud · right-click for voice and keybind"
+        : root.sayState === "playing" ? "Stop reading" : "Read the clipboard aloud · right-click for voice and shortcut"
     onPressed: function(b) {
       if (!root.engineReady) {
         root.open()
@@ -314,7 +314,7 @@ Panel {
           visible: root.setup.phase === "done"
           width: parent.width
           wrapMode: Text.WordWrap
-          text: "Copy any text and click the bubble. For AltGr + Ctrl, copy the keybind into your Hyprland config."
+          text: "Copy any text and click the bubble to hear it.\n\nWant AltGr + Ctrl to read instead? Copy the setup below, paste it at the end of ~/.config/hypr/bindings.lua and save."
           color: root.bar.foreground
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.bodySmall
@@ -322,7 +322,7 @@ Panel {
         Button {
           visible: root.setup.phase === "done"
           width: parent.width
-          text: root.bindCopied ? "Copied · paste in bindings.lua" : "Copy keybind"
+          text: root.bindCopied ? "Copied · now paste it in bindings.lua" : "Copy the shortcut setup"
           fontSize: Style.font.bodySmall
           foreground: root.bar.foreground
           fontFamily: root.bar.fontFamily
@@ -601,10 +601,19 @@ Panel {
           }
         }
 
+        Text {
+          visible: root.showKeys
+          width: parent.width
+          wrapMode: Text.WordWrap
+          text: "The shortcut needs two lines in your Hyprland config. Copy them, paste them at the end of ~/.config/hypr/bindings.lua and save."
+          color: Qt.darker(root.bar.foreground, 1.2)
+          font.family: root.bar.fontFamily
+          font.pixelSize: Style.font.caption
+        }
         Button {
           visible: root.showKeys
           width: parent.width
-          text: root.bindCopied ? "Copied · paste in bindings.lua" : "Copy keybind"
+          text: root.bindCopied ? "Copied · now paste it in bindings.lua" : "Copy the shortcut setup"
           fontSize: Style.font.bodySmall
           foreground: root.bar.foreground
           fontFamily: root.bar.fontFamily

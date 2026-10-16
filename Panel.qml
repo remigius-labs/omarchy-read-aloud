@@ -86,7 +86,7 @@ Panel {
     watchChanges: true
     printErrors: false
     onFileChanged: this.reload()
-    onLoaded: root.engineReady = true
+    onLoaded: { root.engineReady = true; Quickshell.execDetached([root.setupBin, "--refresh"]) }
     onLoadFailed: root.engineReady = false
   }
   FileView {
@@ -96,6 +96,23 @@ Panel {
     printErrors: false
     onFileChanged: this.reload()
     onLoaded: { if (!root.previewSetup) { try { root.setup = JSON.parse(setupFile.text()) } catch (e) {} } }
+  }
+
+  readonly property string keybind:
+      'o.bind("CTRL + ALT + Control_R", "Read clipboard aloud / stop", \'' + root.sayBin + ' --clip\', { release = true })\n'
+    + 'o.bind("CTRL + ALT + Alt_R", "Read clipboard aloud / stop", \'' + root.sayBin + ' --clip\', { release = true })\n'
+  property bool bindCopied: false
+
+  function copyBind() {
+    Quickshell.execDetached(["wl-copy", root.keybind])
+    root.bindCopied = true
+    bindCopiedTimer.restart()
+  }
+
+  Timer {
+    id: bindCopiedTimer
+    interval: 2500
+    onTriggered: root.bindCopied = false
   }
 
   function startSetup() {
@@ -124,7 +141,7 @@ Panel {
     iconComponent: root.sayState === "loading" ? ring : null
     tooltipText: root.opened ? ""
         : root.sayState === "loading" ? "Getting ready · click to cancel"
-        : root.sayState === "playing" ? "Stop reading" : "Read the clipboard aloud · right-click for voice"
+        : root.sayState === "playing" ? "Stop reading" : "Read the clipboard aloud · right-click for voice and keybind"
     onPressed: function(b) {
       if (!root.engineReady) {
         root.open()
@@ -297,10 +314,20 @@ Panel {
           visible: root.setup.phase === "done"
           width: parent.width
           wrapMode: Text.WordWrap
-          text: "Copy any text and click the bubble, or tap AltGr + Ctrl."
+          text: "Copy any text and click the bubble. For AltGr + Ctrl, copy the keybind into your Hyprland config."
           color: root.bar.foreground
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.bodySmall
+        }
+        Button {
+          visible: root.setup.phase === "done"
+          width: parent.width
+          text: root.bindCopied ? "Copied · paste in bindings.lua" : "Copy keybind"
+          fontSize: Style.font.bodySmall
+          foreground: root.bar.foreground
+          fontFamily: root.bar.fontFamily
+          bordered: true
+          onClicked: root.copyBind()
         }
       }
 
@@ -572,6 +599,17 @@ Panel {
               }
             }
           }
+        }
+
+        Button {
+          visible: root.showKeys
+          width: parent.width
+          text: root.bindCopied ? "Copied · paste in bindings.lua" : "Copy keybind"
+          fontSize: Style.font.bodySmall
+          foreground: root.bar.foreground
+          fontFamily: root.bar.fontFamily
+          bordered: true
+          onClicked: root.copyBind()
         }
 
         PanelSectionHeader {

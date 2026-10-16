@@ -39,6 +39,19 @@ if [[ $1 == --cancel ]]; then
   exit 0
 fi
 
+# Keep an installed engine in step with this plugin version: copy changed
+# engine files, and resync packages only when the lockfile changed.
+if [[ $1 == --refresh ]]; then
+  [[ -f $ENGINE/.ready ]] || exit 0
+  for f in speak.py say pyproject.toml uv.lock; do
+    cmp -s "$SRC/$f" "$ENGINE/$f" && continue
+    cp "$SRC/$f" "$ENGINE/$f" || exit 1
+    [[ $f == uv.lock || $f == pyproject.toml ]] && resync=1
+  done
+  [[ -n $resync ]] && (cd "$ENGINE" && uv sync --frozen --python 3.12 -q >/dev/null 2>&1)
+  exit 0
+fi
+
 # Run in its own process group so cancel can stop curl and uv with it.
 if [[ -z $OMARCHY_SAY_GROUP ]]; then
   OMARCHY_SAY_GROUP=1 exec setsid "$0" "$@"

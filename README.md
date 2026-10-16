@@ -16,7 +16,7 @@ Picking a voice plays a short sample. Choices are saved and apply to every read.
 
 ## Keybind
 
-Add a toggle to `~/.config/hypr/bindings.lua`. This one fires on a tap of AltGr + Right Ctrl:
+Add a toggle to `~/.config/hypr/bindings.lua`. **Copy keybind** in Settings (right-click the bubble) copies these lines for you. They fire on a tap of AltGr + Right Ctrl:
 
 ```lua
 o.bind("CTRL + ALT + Control_R", "Read clipboard aloud / stop", '$HOME/.local/share/omarchy-say/say --clip', { release = true })

@@ -27,7 +27,7 @@ def load_settings():
 
 
 VOICE, SPEED, LANG = load_settings()
-RUNDIR = os.environ.get("XDG_RUNTIME_DIR", "/tmp")
+RUNDIR = os.environ["XDG_RUNTIME_DIR"]
 PIDFILE = os.path.join(RUNDIR, "omarchy-say.pid")
 STATEFILE = os.path.join(RUNDIR, "omarchy-say.state")
 
@@ -95,9 +95,33 @@ def speak(text):
     player.wait()
 
 
+CLIP_MAX = 1_000_000
+CLIP_TIMEOUT = 2
+
+
+def kill_group(proc):
+    try:
+        os.killpg(proc.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+
+
 def clipboard():
-    for args in (["wl-paste", "-n"], ["wl-paste", "-n", "-p"]):
-        out = subprocess.run(args, capture_output=True, text=True).stdout.strip()
+    for args in (["wl-paste", "-n", "-t", "text"], ["wl-paste", "-n", "-p", "-t", "text"]):
+        try:
+            proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                    start_new_session=True)
+        except OSError:
+            continue
+        timer = threading.Timer(CLIP_TIMEOUT, kill_group, (proc,))
+        timer.start()
+        try:
+            data = proc.stdout.read(CLIP_MAX)
+        finally:
+            timer.cancel()
+            kill_group(proc)
+            proc.wait()
+        out = data.decode("utf-8", "replace").strip()
         if out:
             return out
     return ""

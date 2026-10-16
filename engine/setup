@@ -6,7 +6,7 @@
 
 SRC=$(dirname "$(readlink -f "$0")")
 ENGINE=${OMARCHY_SAY_HOME:-$HOME/.local/share/omarchy-say}
-RUN=${XDG_RUNTIME_DIR:-/tmp}
+RUN=${XDG_RUNTIME_DIR:?Read Aloud needs XDG_RUNTIME_DIR}
 STATE=$RUN/omarchy-say.setup
 PIDFILE=$RUN/omarchy-say.setup.pid
 

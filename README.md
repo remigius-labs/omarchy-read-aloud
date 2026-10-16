@@ -29,14 +29,6 @@ The first click sets up the voice by itself: Python 3.12 and the Kokoro engine t
 
 Needs `uv`, PipeWire (`pw-play`) and wl-clipboard (`wl-paste`). Omarchy ships all three.
 
-## For agents
-
-`skills/read-aloud/SKILL.md` is a Claude Code skill: when you ask your agent to read something to you, it writes a speakable version and plays it through this engine instead of pasting a wall of text. Link it in:
-
-```bash
-ln -s "$PWD/skills/read-aloud" ~/.claude/skills/read-aloud
-```
-
 ## Install
 
 ```bash

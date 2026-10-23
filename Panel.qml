@@ -18,7 +18,9 @@ Panel {
   property bool engineReady: true
   property var setup: ({ step: 0, phase: "idle" })
   property bool previewSetup: false
-  readonly property bool showSetup: previewSetup || !engineReady
+  // Keeps the "Voice ready" screen up after setup until the panel closes.
+  property bool justFinished: false
+  readonly property bool showSetup: previewSetup || !engineReady || justFinished
   property string voice: "af_heart"
   property string speed: "1.1"
   property bool showAllVoices: false
@@ -95,8 +97,25 @@ Panel {
     watchChanges: true
     printErrors: false
     onFileChanged: this.reload()
-    onLoaded: { if (!root.previewSetup) { try { root.setup = JSON.parse(setupFile.text()) } catch (e) {} } }
+    onLoaded: {
+      if (root.previewSetup) return
+      try { root.setup = JSON.parse(setupFile.text()) } catch (e) {}
+      if (root.setup.phase === "done" && !root.engineReady) {
+        root.justFinished = root.opened
+        readyFile.reload()
+      }
+    }
   }
+
+  // A watch on a file that does not exist yet never fires, and on a fresh
+  // install neither file exists when setup starts, so poll while it runs.
+  Timer {
+    interval: 500
+    repeat: true
+    running: !root.engineReady && root.setup.phase === "running"
+    onTriggered: setupFile.reload()
+  }
+
 
   readonly property string keybind:
       'o.bind("CTRL + ALT + Control_R", "Read clipboard aloud / stop", \'' + root.sayBin + ' --clip\', { release = true })\n'
@@ -131,7 +150,10 @@ Panel {
     function settings(show: bool): void { root.showKeys = show; if (show) root.showAllVoices = false }
   }
 
-  onOpenedChanged: if (opened) { showAllVoices = false; genderFilter = root.voice.charAt(1); showKeys = false; settingsFile.reload() }
+  onOpenedChanged: {
+    if (opened) { showAllVoices = false; genderFilter = root.voice.charAt(1); showKeys = false; settingsFile.reload() }
+    else root.justFinished = false
+  }
 
   BarIconButton {
     id: button

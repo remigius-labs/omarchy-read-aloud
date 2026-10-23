@@ -27,13 +27,15 @@ o.bind("CTRL + ALT + Alt_R", "Read clipboard aloud / stop", '$HOME/.local/share/
 
 The first click sets up the voice by itself: Python 3.12 and the Kokoro engine through `uv`, then the 350 MB voice model, checked against fixed SHA-256 hashes. A progress bar shows in the panel, and it says "Voice ready" when done. Everything lands in `~/.local/share/omarchy-say/`.
 
-Needs `uv`, PipeWire (`pw-play`) and wl-clipboard (`wl-paste`). Omarchy ships all three.
+Needs PipeWire (`pw-play`) and wl-clipboard (`wl-paste`), which Omarchy ships, and `uv`, which some installs lack. Check with `command -v uv`, add it with `omarchy pkg add uv`.
 
 ## Install
 
 ```bash
 omarchy plugin add https://github.com/remigius-labs/omarchy-read-aloud --enable
 ```
+
+The icon shows in the bar after the shell reloads: `omarchy restart shell`, or log out and back in.
 
 ## Remove
 

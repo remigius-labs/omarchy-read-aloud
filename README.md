@@ -37,6 +37,20 @@ omarchy plugin add https://github.com/remigius-labs/omarchy-read-aloud --enable
 
 The icon shows in the bar after the shell reloads: `omarchy restart shell`, or log out and back in.
 
+## Install with an AI assistant
+
+Paste this page into your assistant (Claude Code, Codex, …) and ask it to install Read Aloud. Each step has a check, so it knows when to move on.
+
+1. **Check the tools.** Run `command -v omarchy uv pw-play wl-paste`. All four should print a path.
+   - If `uv` is missing, run `omarchy pkg add uv`. If that fails, use the official installer: `curl -LsSf https://astral.sh/uv/install.sh | sh`, then open a new shell.
+2. **Add the plugin.** Run `omarchy plugin add https://github.com/remigius-labs/omarchy-read-aloud --enable --yes`.
+   - Check: `omarchy plugin list | grep remi.say` shows `enabled`.
+3. **Set up the voice.** Run `~/.config/omarchy/plugins/remi.say/engine/setup`. It installs Python 3.12 and the engine through `uv`, then downloads the 350 MB model. This takes a few minutes.
+   - Check: `ls ~/.local/share/omarchy-say/.ready` exists. If setup stops, it prints the reason; fix that and run it again.
+4. **Reload the bar.** Run `omarchy restart shell`. The speech bubble shows in the bar.
+5. **Test the voice.** Run `~/.local/share/omarchy-say/say "Read Aloud is ready"`. You should hear it.
+6. **Optional keybind.** Add the two lines from [Keybind](#keybind) to `~/.config/hypr/bindings.lua`.
+
 ## Remove
 
 ```bash

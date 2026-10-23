@@ -24,6 +24,7 @@ state() {
 
 fail() {
   state "{\"step\": $STEP, \"phase\": \"error\", \"error\": \"$1\"}"
+  echo "Read Aloud setup: $1" >&2
   rm -f "$PIDFILE"
   exit 1
 }

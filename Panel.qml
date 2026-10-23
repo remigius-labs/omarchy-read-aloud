@@ -120,6 +120,7 @@ Panel {
   readonly property string keybind:
       'o.bind("CTRL + ALT + Control_R", "Read clipboard aloud / stop", \'' + root.sayBin + ' --clip\', { release = true })\n'
     + 'o.bind("CTRL + ALT + Alt_R", "Read clipboard aloud / stop", \'' + root.sayBin + ' --clip\', { release = true })\n'
+    + 'o.bind("SUPER + ALT + PRINT", "Read screenshot aloud", \'omarchy-capture-text && ' + root.sayBin + ' --clip\')\n'
   property bool bindCopied: false
 
   function copyBind() {
@@ -627,7 +628,7 @@ Panel {
           visible: root.showKeys
           width: parent.width
           wrapMode: Text.WordWrap
-          text: "The shortcut needs two lines in your Hyprland config. Copy them, paste them at the end of ~/.config/hypr/bindings.lua and save."
+          text: "The shortcuts need three lines in your Hyprland config: AltGr + Ctrl reads the clipboard, Super + Alt + Print reads a screenshot. Copy them, paste them at the end of ~/.config/hypr/bindings.lua and save."
           color: Qt.darker(root.bar.foreground, 1.2)
           font.family: root.bar.fontFamily
           font.pixelSize: Style.font.caption

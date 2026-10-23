@@ -23,6 +23,14 @@ o.bind("CTRL + ALT + Control_R", "Read clipboard aloud / stop", '$HOME/.local/sh
 o.bind("CTRL + ALT + Alt_R", "Read clipboard aloud / stop", '$HOME/.local/share/omarchy-say/say --clip', { release = true })
 ```
 
+### Read a screenshot aloud
+
+Drag a box over any text on screen and hear it. Omarchy's built-in OCR copies the text, then Read Aloud reads it. Add this line too:
+
+```lua
+o.bind("SUPER + ALT + PRINT", "Read screenshot aloud", 'omarchy-capture-text && $HOME/.local/share/omarchy-say/say --clip')
+```
+
 ## First run
 
 The first click sets up the voice by itself: Python 3.12 and the Kokoro engine through `uv`, then the 350 MB voice model, checked against fixed SHA-256 hashes. A progress bar shows in the panel, and it says "Voice ready" when done. Everything lands in `~/.local/share/omarchy-say/`.
@@ -49,7 +57,7 @@ Paste this page into your assistant (Claude Code, Codex, …) and ask it to inst
    - Check: `ls ~/.local/share/omarchy-say/.ready` exists. If setup stops, it prints the reason; fix that and run it again.
 4. **Reload the bar.** Run `omarchy restart shell`. The speech bubble shows in the bar.
 5. **Test the voice.** Run `~/.local/share/omarchy-say/say "Read Aloud is ready"`. You should hear it.
-6. **Optional keybind.** Add the two lines from [Keybind](#keybind) to `~/.config/hypr/bindings.lua`.
+6. **Optional keybinds.** Add the lines from [Keybind](#keybind) to `~/.config/hypr/bindings.lua`, including the screenshot one.
 
 ## Remove
 

@@ -1,4 +1,5 @@
 """Read text aloud with Kokoro. Run again while it reads to stop."""
+import hashlib
 import json
 import os
 import queue
@@ -30,6 +31,7 @@ VOICE, SPEED, LANG = load_settings()
 RUNDIR = os.environ["XDG_RUNTIME_DIR"]
 PIDFILE = os.path.join(RUNDIR, "omarchy-say.pid")
 STATEFILE = os.path.join(RUNDIR, "omarchy-say.state")
+SEENFILE = os.path.join(RUNDIR, "omarchy-say.seen")
 
 
 def set_state(state):
@@ -106,25 +108,68 @@ def kill_group(proc):
         pass
 
 
-def clipboard():
-    for args in (["wl-paste", "-n", "-t", "text"], ["wl-paste", "-n", "-p", "-t", "text"]):
-        try:
-            proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                    start_new_session=True)
-        except OSError:
-            continue
-        timer = threading.Timer(CLIP_TIMEOUT, kill_group, (proc,))
-        timer.start()
-        try:
-            data = proc.stdout.read(CLIP_MAX)
-        finally:
-            timer.cancel()
-            kill_group(proc)
-            proc.wait()
-        out = data.decode("utf-8", "replace").strip()
+def offered_type():
+    # Some apps copy text under a non-text type only (terminals: application/mbox)
+    try:
+        types = subprocess.run(["wl-paste", "--list-types"], capture_output=True, text=True,
+                               timeout=CLIP_TIMEOUT).stdout.split()
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    for t in types:
+        if not t.startswith(("image/", "audio/", "video/", "font/")) and t != "application/octet-stream":
+            return t
+    return None
+
+
+def paste(args):
+    try:
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                start_new_session=True)
+    except OSError:
+        return ""
+    timer = threading.Timer(CLIP_TIMEOUT, kill_group, (proc,))
+    timer.start()
+    try:
+        data = proc.stdout.read(CLIP_MAX)
+    finally:
+        timer.cancel()
+        kill_group(proc)
+        proc.wait()
+    return data.decode("utf-8", "replace").strip()
+
+
+def newest_selection():
+    # Apps that draw their own selection (Herdr, tmux) copy it to the clipboard and leave the
+    # primary selection stale, so --sel reads whichever of the two changed since the last read
+    sel = paste(["wl-paste", "-n", "-p", "-t", "text"])
+    clip = paste(["wl-paste", "-n", "-t", "text"])
+    now = {k: hashlib.sha256(v.encode()).hexdigest() for k, v in (("sel", sel), ("clip", clip))}
+    try:
+        with open(SEENFILE) as f:
+            seen = json.load(f)
+    except (OSError, ValueError):
+        seen = {}
+    try:
+        with open(SEENFILE, "w") as f:
+            json.dump(now, f)
+    except OSError:
+        pass
+    if clip and now["clip"] != seen.get("clip") and now["sel"] == seen.get("sel"):
+        return clip
+    return sel or clip
+
+
+def clipboard(selection_first=False):
+    if selection_first:
+        out = newest_selection()
         if out:
             return out
-    return ""
+    for args in (["wl-paste", "-n", "-t", "text"], ["wl-paste", "-n", "-p", "-t", "text"]):
+        out = paste(args)
+        if out:
+            return out
+    fallback = offered_type()
+    return paste(["wl-paste", "-n", "-t", fallback]) if fallback else ""
 
 
 def main():
@@ -140,7 +185,8 @@ def main():
     if args == ["-"]:
         text = clean(sys.stdin.read(CLIP_MAX))
     else:
-        text = clean(" ".join(a for a in args if a != "--clip") or clipboard())
+        text = clean(" ".join(a for a in args if a not in ("--clip", "--sel"))
+                     or clipboard("--sel" in args))
     if not text:
         return
     with open(PIDFILE, "w") as f:

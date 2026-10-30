@@ -79,6 +79,8 @@ Copy text, tap the key, and it reads it out.
 
 ![Copy text, tap the key, it reads aloud](demo.gif)
 
+The voice engine runs with no network access at all (`unshare -n`), so nothing you read can leave the machine. This also blocks the usage telemetry that onnxruntime, the library Kokoro runs on, tries to send to Microsoft. On a system with unprivileged user namespaces switched off, it runs normally instead.
+
 ## License
 
 MIT. Kokoro model weights are Apache 2.0. Packages the setup installs keep their own licenses: kokoro-onnx and onnxruntime (MIT), phonemizer and espeak-ng (GPL-3).

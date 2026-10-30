@@ -1,4 +1,9 @@
 #!/bin/sh
 # Read the clipboard aloud (or the given text); run again while it reads to stop.
 HERE=$(dirname "$(readlink -f "$0")")
+# Reading needs no network, so the engine runs without one: onnxruntime's
+# telemetry then has nowhere to send. Falls back where user namespaces are off.
+if unshare -n --map-current-user true 2>/dev/null; then
+  exec setsid -w unshare -n --map-current-user "$HERE/.venv/bin/python" "$HERE/speak.py" "$@"
+fi
 exec setsid -w "$HERE/.venv/bin/python" "$HERE/speak.py" "$@"

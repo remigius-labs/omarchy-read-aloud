@@ -3,6 +3,9 @@
 HERE=$(dirname "$(readlink -f "$0")")
 # Reading needs no network, so the engine runs without one: onnxruntime's
 # telemetry then has nowhere to send. Falls back where user namespaces are off.
+# Its device ID and event queue go to the runtime dir, cleared at logout.
+export XDG_CACHE_HOME="$XDG_RUNTIME_DIR/omarchy-say/cache"
+mkdir -p -m 700 "$XDG_CACHE_HOME"
 if unshare -n --map-current-user true 2>/dev/null; then
   exec setsid -w unshare -n --map-current-user "$HERE/.venv/bin/python" "$HERE/speak.py" "$@"
 fi

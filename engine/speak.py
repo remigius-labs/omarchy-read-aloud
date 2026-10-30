@@ -67,8 +67,10 @@ def clean(text):
 
 
 def speak(text):
+    import onnxruntime
     from kokoro_onnx import Kokoro
 
+    onnxruntime.disable_telemetry_events()
     kokoro = Kokoro(MODEL, VOICES)
     sentences = [x for x in re.split(r"(?<=[.!?])\s+", text) if x.strip()]
     chunks = queue.Queue(maxsize=4)
